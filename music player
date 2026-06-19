@@ -1,0 +1,211 @@
+# SIMPLE PYTHON MUSIC PLAYER 
+
+# Import necessary libraries
+
+import pygame                  # For playing audio
+import tkinter as tk            # For GUI
+from tkinter import filedialog  # To browse files
+from tkinter import messagebox  # For pop-up messages
+from tkinter import ttk         # For styled widgets
+
+# INITIAL SETUP
+
+# Initialize the mixer module of pygame
+pygame.mixer.init()
+
+# Create the main window
+root = tk.Tk()
+root.title("🎶 Simple Music Player 🎶")
+root.geometry("600x500")
+
+root.configure(bg="#d9caff")   
+
+# GLOBAL VARIABLES
+
+playlist = []        # To store list of selected songs
+current_index = 0    # Keeps track of the current song index
+paused = False       # To check if the song is paused
+
+# FUNCTIONS
+
+def add_songs():
+    """Add multiple songs to the playlist."""
+    global playlist
+    songs = filedialog.askopenfilenames(
+        title="Choose Songs",
+        filetypes=(("MP3 Files", "*.mp3"), ("All Files", "*.*"))
+    )
+    
+    # Add each selected song to the listbox and playlist
+    for song in songs:
+        playlist.append(song)
+        song_box.insert(tk.END, song.split("/")[-1])  # Only show file name
+
+def play_song():
+    """Play the selected song."""
+    global current_index, paused
+
+    try:
+        song = playlist[current_index]
+        pygame.mixer.music.load(song)
+        pygame.mixer.music.play()
+        update_song_label(song)
+        paused = False
+    except:
+        messagebox.showerror("Error", "Please select a song to play!")
+
+def pause_song():
+    """Pause the current song."""
+    global paused
+    pygame.mixer.music.pause()
+    paused = True
+    song_status.config(text="Status: Paused ⏸️")
+
+def resume_song():
+    """Resume the paused song."""
+    global paused
+    if paused:
+        pygame.mixer.music.unpause()
+        paused = False
+        song_status.config(text="Status: Playing ▶️")
+
+def stop_song():
+    """Stop the current song."""
+    pygame.mixer.music.stop()
+    song_status.config(text="Status: Stopped ⏹️")
+
+def next_song():
+    """Play the next song in the playlist."""
+    global current_index
+    if current_index < len(playlist) - 1:
+        current_index += 1
+        play_song()
+    else:
+        messagebox.showinfo("Info", "End of Playlist!")
+
+def previous_song():
+    """Play the previous song in the playlist."""
+    global current_index
+    if current_index > 0:
+        current_index -= 1
+        play_song()
+    else:
+        messagebox.showinfo("Info", "You are at the first song!")
+
+def remove_song():
+    """Remove the selected song from playlist."""
+    global playlist
+    selected = song_box.curselection()
+    if selected:
+        index = selected[0]
+        song_box.delete(index)
+        playlist.pop(index)
+        messagebox.showinfo("Removed", "Song removed from playlist!")
+    else:
+        messagebox.showwarning("Warning", "Please select a song to remove!")
+
+def clear_playlist():
+    """Clear all songs from playlist."""
+    global playlist
+    song_box.delete(0, tk.END)
+    playlist.clear()
+    pygame.mixer.music.stop()
+    update_song_label("No song selected")
+    song_status.config(text="Status: Playlist Cleared 🧹")
+
+def update_song_label(song_name):
+    """Display the currently playing song name."""
+    song_label.config(text=f"Now Playing: {song_name.split('/')[-1]}")
+    song_status.config(text="Status: Playing ▶️")
+
+def set_volume(value):
+    current_val = float(value)
+    volume = current_val / 100
+    pygame.mixer.music.set_volume(volume)
+    volume_label.config(text=f"Volume: {int(current_val)}%")
+
+# GUI LAYOUT
+
+# Title Label
+title = tk.Label(root, text="🎵 Simple Python Music Player 🎵", 
+                 font=("Helvetica", 16, "bold"), bg="#d9caff", fg="#6a5acd")
+title.pack(pady=10)
+
+# Frame for song list
+frame = tk.Frame(root, bg="#d9caff")
+frame.pack(pady=10)
+
+# Scrollbar for the listbox
+scrollbar = tk.Scrollbar(frame, orient=tk.VERTICAL)
+
+# Listbox to display playlist (pastel blue & pink)
+song_box = tk.Listbox(frame, width=60, height=10, bg="#ffe6ff",
+                      fg="black", selectbackground="#c2d6ff",
+                      yscrollcommand=scrollbar.set)
+
+scrollbar.config(command=song_box.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+song_box.pack(padx=10)
+
+# Buttons for playlist management
+playlist_frame = tk.Frame(root, bg="#d9caff")
+playlist_frame.pack(pady=10)
+
+add_btn = tk.Button(playlist_frame, text="Add Songs", width=15, command=add_songs, bg="#c2d6ff")
+add_btn.grid(row=0, column=0, padx=5)
+
+remove_btn = tk.Button(playlist_frame, text="Remove Song", width=15, command=remove_song, bg="#ffccf2")
+remove_btn.grid(row=0, column=1, padx=5)
+
+clear_btn = tk.Button(playlist_frame, text="Clear Playlist", width=15, command=clear_playlist, bg="#e5ccff")
+clear_btn.grid(row=0, column=2, padx=5)
+
+# Song Label
+song_label = tk.Label(root, text="No song selected", font=("Helvetica", 12), bg="#d9caff")
+song_label.pack(pady=5)
+
+# Frame for control buttons
+control_frame = tk.Frame(root, bg="#d9caff")
+control_frame.pack(pady=20)
+
+# Control Buttons (pastel pink + purple + blue)
+prev_btn = tk.Button(control_frame, text="⏮️ Prev", width=10, command=previous_song, bg="#ccd9ff")
+prev_btn.grid(row=0, column=0, padx=5)
+
+play_btn = tk.Button(control_frame, text="▶️ Play", width=10, command=play_song, bg="#e6ccff")
+play_btn.grid(row=0, column=1, padx=5)
+
+pause_btn = tk.Button(control_frame, text="⏸️ Pause", width=10, command=pause_song, bg="#ffccf2")
+pause_btn.grid(row=0, column=2, padx=5)
+
+resume_btn = tk.Button(control_frame, text="▶️ Resume", width=10, command=resume_song, bg="#d9b3ff")
+resume_btn.grid(row=0, column=3, padx=5)
+
+stop_btn = tk.Button(control_frame, text="⏹️ Stop", width=10, command=stop_song, bg="#ffb3e6")
+stop_btn.grid(row=0, column=4, padx=5)
+
+next_btn = tk.Button(control_frame, text="⏭️ Next", width=10, command=next_song, bg="#c2e0ff")
+next_btn.grid(row=0, column=5, padx=5)
+
+# Volume Control
+volume_frame = tk.Frame(root, bg="#d9caff")
+volume_frame.pack(pady=10)
+
+volume_label = tk.Label(volume_frame, text="Volume: 70%", bg="#d9caff", font=("Helvetica", 11))
+volume_label.pack(side=tk.LEFT, padx=10)
+
+volume_slider = ttk.Scale(volume_frame, from_=0, to=100, orient="horizontal", command=set_volume)
+volume_slider.set(70)
+pygame.mixer.music.set_volume(0.7)
+volume_slider.pack(side=tk.LEFT)
+
+# Song Status
+song_status = tk.Label(root, text="Status: Ready 🎧", bg="#d9caff", font=("Helvetica", 12))
+song_status.pack(pady=10)
+
+# Footer Label
+footer = tk.Label(root, text="Python Project", bg="#d9caff", font=("Helvetica", 9))
+footer.pack(side=tk.BOTTOM, pady=5)
+
+# MAIN LOOP
+root.mainloop()
